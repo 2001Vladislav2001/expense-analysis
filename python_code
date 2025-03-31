@@ -1,0 +1,50 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+
+def load_data(file_path):
+    """Завантажує Excel-файл і повертає DataFrame."""
+    return pd.read_excel(file_path, parse_dates=['Дата'])
+
+def filter_by_month(df, year, month):
+    """Фільтрує витрати за вказаним місяцем."""
+    return df[(df['Дата'].dt.year == year) & (df['Дата'].dt.month == month)]
+
+def analyze_expenses(df):
+    """Групує витрати за категоріями."""
+    category_summary = df.groupby('Категорія')['Сума'].sum()
+    return category_summary
+
+def calculate_daily_average(df):
+    """Обчислює середньоденні витрати."""
+    days = (df['Дата'].max() - df['Дата'].min()).days + 1
+    return df['Сума'].sum() / days if days > 0 else 0
+
+def plot_expenses(category_summary):
+    """Будує графік витрат за категоріями."""
+    plt.figure(figsize=(8, 5))
+    category_summary.plot(kind='bar', color='skyblue')
+    plt.title('Аналіз витрат за категоріями')
+    plt.ylabel('Сума витрат')
+    plt.xticks(rotation=45)
+    plt.grid(axis='y')
+    plt.show()
+
+def save_report(df, category_summary, output_file):
+    """Зберігає результати в Excel з деталізацією."""
+    with pd.ExcelWriter(output_file) as writer:
+        df.to_excel(writer, sheet_name='Всі витрати', index=False)
+        category_summary.to_excel(writer, sheet_name='Зведена статистика')
+    print(f'Звіт збережено у {output_file}')
+
+# Використання
+file_path = 'expenses.xlsx'  # Замініть на реальний файл
+output_file = 'expense_report.xlsx'
+
+df = load_data(file_path)
+year, month = 2025, 3  # Змінюйте для вибору іншого місяця
+df_filtered = filter_by_month(df, year, month)
+category_summary = analyze_expenses(df_filtered)
+daily_avg = calculate_daily_average(df_filtered)
+print(f'Середньоденні витрати: {daily_avg:.2f} грн')
+plot_expenses(category_summary)
+save_report(df_filtered, category_summary, output_file)
